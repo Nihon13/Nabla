@@ -196,7 +196,8 @@ protected:
 // TODO: docs and explanation for working
 inline bool impl::ICancellableAsyncQueueDispatcherBase::request_base_t::set_cancel()
 {
-    std::unique_lock<std::mutex> lk(mtx);
+    // there wont be an await anymore, so release the lock upon exit
+    std::unique_lock<std::mutex> lk(underlying_mem_protect,std::adopt_lock);
     if (ready.load())
         return false;
     if (future)
