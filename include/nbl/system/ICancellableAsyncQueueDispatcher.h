@@ -36,7 +36,21 @@ namespace impl
 
         };
 
-        class future_base_t
+        template<typename T>
+        class virtual_future_t
+        {
+        public:
+            virtual void cancel() = 0;
+            [[nodiscard]] virtual bool ready() const = 0;
+            virtual void wait() = 0;
+            [[nodiscard]] virtual bool valid() const = 0;
+            [[nodiscard]] virtual T& get() const = 0;
+        protected:
+            virtual_future_t() {}
+        };
+
+        template<typename T>
+        class future_base_t : public virtual_future_t<T>
         {
             friend request_base_t;
 
@@ -47,7 +61,7 @@ namespace impl
             // future_t is non-copyable and non-movable
             future_base_t(const future_base_t&) = delete;
 
-            void cancel()
+            void cancel() override
             {
                 request_base_t* req = request.exchange(nullptr);
                 if (req)
@@ -62,14 +76,14 @@ namespace impl
             }
 
             // Misused these a couple times so i'll better put [[nodiscard]] here 
-            [[nodiscard]] bool ready() const 
+            [[nodiscard]] bool ready() const override
             { 
                 request_base_t* req = request.load();
                 return !req || req->ready; 
             }
-            [[nodiscard]] bool valid() const { return valid_flag.load(); }
+            [[nodiscard]] bool valid() const override { return valid_flag.load(); }
 
-            void wait()
+            void wait() override
             {
                 if (!ready())
                     request.load()->wait();

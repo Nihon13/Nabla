@@ -157,6 +157,8 @@ private:
 public:
     template <typename T>
     using future_t = CAsyncQueue::future_t<T>;
+    template <typename T>
+    using virtual_future_t = CAsyncQueue::virtual_future_t<T>;
 
     explicit ISystem(core::smart_refctd_ptr<ISystemCaller>&& caller) : m_dispatcher(this, std::move(caller))
     {
@@ -176,7 +178,7 @@ public:
     }
 
 public:
-    bool createFile(future_t<core::smart_refctd_ptr<IFile>>& future, const std::filesystem::path& filename, IFile::E_CREATE_FLAGS flags)
+    bool createFile(virtual_future_t<core::smart_refctd_ptr<IFile>>& future, const std::filesystem::path& filename, IFile::E_CREATE_FLAGS flags)
     {
         SRequestParams_CREATE_FILE params;
         if (filename.string().size() >= sizeof(params.filename))
@@ -192,7 +194,7 @@ public:
 
 private:
     // TODO: files shall have public read/write methods, and these should be protected, then the `IFile` implementations should call these behind the scenes via a friendship
-    bool readFile(future<size_t>& future, IFile* file, void* buffer, size_t offset, size_t size)
+    bool readFile(virtual_future_t<size_t>& future, IFile* file, void* buffer, size_t offset, size_t size)
     {
         SRequestParams_READ params;
         params.buffer = buffer;
@@ -203,7 +205,7 @@ private:
         return true;
     }
 
-    bool writeFile(future<size_t>& future, IFile* file, const void* buffer, size_t offset, size_t size)
+    bool writeFile(virtual_future_t<size_t>& future, IFile* file, const void* buffer, size_t offset, size_t size)
     {
         SRequestParams_WRITE params;
         params.buffer = buffer;
@@ -289,6 +291,7 @@ public:
         return nullptr;
     }
 };
+
 
 template<typename T>
 class future : public ISystem::future_t<T> {};

@@ -45,14 +45,18 @@ class IFile : public core::IReferenceCounted
 		{
 			return (m_flags & ECF_COHERENT) == ECF_COHERENT;
 		}
-
-		// TODO: make the `ISystem` methods protected instead 
-		void read(future<size_t>& fut, void* buffer, size_t offset, size_t sizeToRead);
-		void write(future<size_t>& fut, const void* buffer, size_t offset, size_t sizeToWrite);
+		
+		/*
+			In general files that derive from IFile should only override read_impl()/write_impl() methods,
+			cause read()/write() methods have a predefined algorithm of going through ISystem::CThreadHandler, 
+			but for things like `CFileView` and other "fast" files read() and write() amethods are virtual
+		*/
+		virtual void read(system::ISystem::virtual_future_t<size_t>& fut, void* buffer, size_t offset, size_t sizeToRead);
+		virtual void write(system::ISystem::virtual_future_t<size_t>& fut, const void* buffer, size_t offset, size_t sizeToWrite);
 
 	protected:
-		virtual size_t read_impl(void* buffer, size_t offset, size_t sizeToRead) = 0;
-		virtual size_t write_impl(const void* buffer, size_t offset, size_t sizeToWrite) = 0;
+		virtual size_t read_impl(void* buffer, size_t offset, size_t sizeToRead) {};
+		virtual size_t write_impl(const void* buffer, size_t offset, size_t sizeToWrite) {};
 
 		// the ISystem is the factory, so this starys protected
 		explicit IFile(core::smart_refctd_ptr<ISystem>&& _system, std::underlying_type_t<E_CREATE_FLAGS> _flags);

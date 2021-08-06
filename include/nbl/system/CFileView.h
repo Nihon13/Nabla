@@ -7,7 +7,7 @@ namespace nbl::system
 class CFileView : public IFile
 {
 public:
-	CFileView(core::smart_refctd_ptr<ISystem>&& sys, const std::filesystem::path& _name, std::underlying_type_t<E_CREATE_FLAGS> _flags) : IFile(std::move(sys),_flags | ECF_COHERENT | ECF_MAPPABLE), m_name(_name)
+	CFileView(const std::filesystem::path& _name, std::underlying_type_t<E_CREATE_FLAGS> _flags) : IFile(nullptr, _flags | ECF_COHERENT | ECF_MAPPABLE), m_name(_name)
 	{
 	}
 
@@ -24,17 +24,18 @@ public:
 		return m_buffer.size();
 	}
 protected:
-	size_t read_impl(void* buffer, size_t offset, size_t sizeToRead) override final
+	void read(system::ISystem::virtual_future_t<size_t>& future, void* buffer, size_t offset, size_t sizeToRead) override final
 	{
 		if (offset + sizeToRead > m_buffer.size())
 		{
-			return 0u;
+			// neet to do future.setResult(0)
 		}
+		future.get()
 		memcpy(buffer, m_buffer.data(), sizeToRead);
-		return sizeToRead;
+		//need to do future.setResult(sizeTowrite)
 	}
 
-	size_t write_impl(const void* buffer, size_t offset, size_t sizeToWrite) override final
+	size_t write(system::ISystem::virtual_future_t, const void* buffer, size_t offset, size_t sizeToWrite) override final
 	{
 		if (offset + sizeToWrite > m_buffer.size())
 		{
